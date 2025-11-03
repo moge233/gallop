@@ -4,6 +4,7 @@
 import csv
 #  from datetime import date, datetime
 import os
+import re
 
 #  from pandas import DataFrame, concat, to_numeric
 #  from numpy import nan
@@ -379,8 +380,16 @@ def chart_to_data_dict(chart: Chart, data_dir: str, track_code: str):
             del row_horse_dict['past_performances']
             chart_dict[key][row.horse.name]['datekey'] = f'{row.race.date}{row.race.number:02d}'
             chart_dict[key][row.horse.name]['winner'] = 0
+            chart_dict[key][row.horse.name]['race_type'] = row.race.race_type
+            chart_dict[key][row.horse.name]['classification'] = row.race.classification
+            chart_dict[key][row.horse.name]['claiming_price'] = row.race.claiming_price
+            chart_dict[key][row.horse.name]['surface'] = row.race.surface
+            chart_dict[key][row.horse.name]['all_weather_flag'] = row.race.todays_all_weather_surface_flag
+            chart_dict[key][row.horse.name]['distance'] = round(abs(row.race.distance / 220), 2)
             for performance in chart.starters_performance_data:
-                if performance.horse_name.casefold() == row.horse.name.casefold():
+                horse_name = re.sub(r'\([^()]*\)', '', performance.horse_name).rstrip().casefold()
+                if row.race.number == performance.race_number and \
+                        horse_name == row.horse.name.casefold():
                     if performance.program_number == 'SCR':
                         chart_dict[key][row.horse.name]['scratch'] = 1
                     else:
@@ -435,3 +444,413 @@ def clean_row(row: dict):
     ret = row
     del ret['trainer_key_stats']
     return ret
+
+
+def calculate_horse_fractional_time1_1(df_row):
+    if df_row['pps_distance_1'] == '':
+        return ''
+    elif df_row['pps_distance_1'] >= 12 or df_row['pps_distance_1'] < 5.5:
+        return ''
+    elif df_row['pps_distance_1'] < 8:
+        return df_row['pps_fr1_1'] + df_row['pps_first_call_beaten_lengths_1'] * 0.2
+    else:
+        return df_row['pps_fr2_1'] + df_row['pps_first_call_beaten_lengths_1'] * 0.2
+
+
+def calculate_horse_fractional_time2_1(df_row):
+    if df_row['pps_distance_1'] == '':
+        return ''
+    elif df_row['pps_distance_1'] >= 12 or df_row['pps_distance_1'] < 5.5:
+        return ''
+    elif df_row['pps_distance_1'] < 8:
+        return df_row['pps_fr2_1'] + df_row['pps_second_call_beaten_lengths_1'] * 0.2
+    else:
+        return df_row['pps_fr3_1'] + df_row['pps_second_call_beaten_lengths_1'] * 0.2
+
+
+def calculate_horse_final_time_1(df_row):
+    if df_row['pps_distance_1'] == '':
+        return ''
+    elif df_row['pps_distance_1'] >= 12 or df_row['pps_distance_1'] < 5.5:
+        return ''
+    else:
+        return df_row['pps_final_time_1'] + df_row['pps_finish_beaten_lengths_1'] * 0.2
+
+
+def calculate_horse_fractional_time1_2(df_row):
+    if df_row['pps_distance_2'] == '':
+        return ''
+    elif df_row['pps_distance_2'] >= 12 or df_row['pps_distance_2'] < 5.5:
+        return ''
+    elif df_row['pps_distance_2'] < 8:
+        return df_row['pps_fr1_2'] + df_row['pps_first_call_beaten_lengths_2'] * 0.2
+    else:
+        return df_row['pps_fr2_2'] + df_row['pps_first_call_beaten_lengths_2'] * 0.2
+
+
+def calculate_horse_fractional_time2_2(df_row):
+    if df_row['pps_distance_2'] == '':
+        return ''
+    elif df_row['pps_distance_2'] >= 12 or df_row['pps_distance_2'] < 5.5:
+        return ''
+    elif df_row['pps_distance_2'] < 8:
+        return df_row['pps_fr2_2'] + df_row['pps_second_call_beaten_lengths_2'] * 0.2
+    else:
+        return df_row['pps_fr3_2'] + df_row['pps_second_call_beaten_lengths_2'] * 0.2
+
+
+def calculate_horse_final_time_2(df_row):
+    if df_row['pps_distance_2'] == '':
+        return ''
+    elif df_row['pps_distance_2'] >= 12 or df_row['pps_distance_2'] < 5.5:
+        return ''
+    else:
+        return df_row['pps_final_time_2'] + df_row['pps_finish_beaten_lengths_2'] * 0.2
+
+
+def calculate_horse_fractional_time1_3(df_row):
+    if df_row['pps_distance_3'] == '':
+        return ''
+    elif df_row['pps_distance_3'] >= 12 or df_row['pps_distance_3'] < 5.5:
+        return ''
+    elif df_row['pps_distance_3'] < 8:
+        return df_row['pps_fr1_3'] + df_row['pps_first_call_beaten_lengths_3'] * 0.2
+    else:
+        return df_row['pps_fr2_3'] + df_row['pps_first_call_beaten_lengths_3'] * 0.2
+
+
+def calculate_horse_fractional_time2_3(df_row):
+    if df_row['pps_distance_3'] == '':
+        return ''
+    elif df_row['pps_distance_3'] >= 12 or df_row['pps_distance_3'] < 5.5:
+        return ''
+    elif df_row['pps_distance_3'] < 8:
+        return df_row['pps_fr2_3'] + df_row['pps_second_call_beaten_lengths_3'] * 0.2
+    else:
+        return df_row['pps_fr3_3'] + df_row['pps_second_call_beaten_lengths_3'] * 0.2
+
+
+def calculate_horse_final_time_3(df_row):
+    if df_row['pps_distance_3'] == '':
+        return ''
+    elif df_row['pps_distance_3'] >= 12 or df_row['pps_distance_3'] < 5.5:
+        return ''
+    else:
+        return df_row['pps_final_time_3'] + df_row['pps_finish_beaten_lengths_3'] * 0.2
+
+
+def calculate_horse_fractional_time1_4(df_row):
+    if df_row['pps_distance_4'] == '':
+        return ''
+    elif df_row['pps_distance_4'] >= 12 or df_row['pps_distance_4'] < 5.5:
+        return ''
+    elif df_row['pps_distance_4'] < 8:
+        return df_row['pps_fr1_4'] + df_row['pps_first_call_beaten_lengths_4'] * 0.2
+    else:
+        return df_row['pps_fr2_4'] + df_row['pps_first_call_beaten_lengths_4'] * 0.2
+
+
+def calculate_horse_fractional_time2_4(df_row):
+    if df_row['pps_distance_4'] == '':
+        return ''
+    elif df_row['pps_distance_4'] >= 12 or df_row['pps_distance_4'] < 5.5:
+        return ''
+    elif df_row['pps_distance_4'] < 8:
+        return df_row['pps_fr2_4'] + df_row['pps_second_call_beaten_lengths_4'] * 0.2
+    else:
+        return df_row['pps_fr3_4'] + df_row['pps_second_call_beaten_lengths_4'] * 0.2
+
+
+def calculate_horse_final_time_4(df_row):
+    if df_row['pps_distance_4'] == '':
+        return ''
+    elif df_row['pps_distance_4'] >= 12 or df_row['pps_distance_4'] < 5.5:
+        return ''
+    else:
+        return df_row['pps_final_time_4'] + df_row['pps_finish_beaten_lengths_4'] * 0.2
+
+
+def calculate_horse_fractional_fps1_1(df_row):
+    if df_row['pps_distance_1'] == '' or df_row['pps_distance_1'] == 0:
+        return 0
+    elif df_row['pps_distance_1'] >= 12 or df_row['pps_distance_1'] < 5.5:
+        return 0
+    elif df_row['pps_distance_1'] < 8:
+        d = 2
+        fr1 = df_row['pps_fr1_1']
+        bl1 = df_row['pps_first_call_beaten_lengths_1']
+        if fr1 == 0:
+            return 0
+        return round((d * 660) / (fr1 + bl1 * 0.2), 2)
+    else:
+        if df_row['pps_fr2_1'] == 0:
+            return 0
+        d = 4
+        fr2 = df_row['pps_fr2_1']
+        bl2 = df_row['pps_first_call_beaten_lengths_1']
+        if fr2 == 0:
+            return 0
+        return round((d * 660) / (fr2 + bl2 * 0.2), 2)
+
+
+def calculate_horse_fractional_fps2_1(df_row):
+    if df_row['pps_distance_1'] == '' or df_row['pps_distance_1'] == 0:
+        return ''
+    elif df_row['pps_distance_1'] >= 12 or df_row['pps_distance_1'] < 5.5:
+        return ''
+    elif df_row['pps_distance_1'] < 8:
+        d = 2
+        fr2 = df_row['pps_fr2_1']
+        bl2 = df_row['pps_second_call_beaten_lengths_1']
+        fr1 = df_row['pps_fr1_1']
+        bl1 = df_row['pps_first_call_beaten_lengths_1']
+        if fr1 == 0 or fr2 == 0:
+            return 0
+        return round((d * 660) / ((fr2 + bl2 * 0.2) - (fr1 + bl1 * 0.2)), 2)
+    else:
+        d = 2
+        fr3 = df_row['pps_fr3_1']
+        bl3 = df_row['pps_second_call_beaten_lengths_1']
+        fr2 = df_row['pps_fr2_1']
+        bl2 = df_row['pps_first_call_beaten_lengths_1']
+        if fr2 == 0 or fr3 == 0:
+            return 0
+        return round((d * 660) / ((fr3 + bl3 * 0.2) - (fr2 + bl2 * 0.2)), 2)
+
+
+def calculate_horse_fractional_fps3_1(df_row):
+    if df_row['pps_distance_1'] == '' or df_row['pps_distance_1'] == 0:
+        return ''
+    elif df_row['pps_distance_1'] >= 12 or df_row['pps_distance_1'] < 5.5:
+        return ''
+    elif df_row['pps_distance_1'] < 8:
+        d = df_row['pps_distance_1'] - 4
+        fr3 = df_row['pps_final_time_1']
+        bl3 = df_row['pps_finish_beaten_lengths_1']
+        fr2 = df_row['pps_fr2_1']
+        bl2 = df_row['pps_second_call_beaten_lengths_1']
+        if fr2 == 0 or fr3 == 0:
+            return 0
+        return round((d * 660) / ((fr3 + bl3 * 0.2) - (fr2 + bl2 * 0.2)), 2)
+    else:
+        d = df_row['pps_distance_1'] - 6
+        fr4 = df_row['pps_final_time_1']
+        bl4 = df_row['pps_finish_beaten_lengths_1']
+        fr3 = df_row['pps_fr3_1']
+        bl3 = df_row['pps_second_call_beaten_lengths_1']
+        if fr3 == 0 or fr4 == 0:
+            return 0
+        return round((d * 660) / ((fr4 + bl4 * 0.2) - (fr3 + bl3 * 0.2)), 2)
+
+
+def calculate_horse_fractional_fps1_2(df_row):
+    if df_row['pps_distance_2'] == '' or df_row['pps_distance_2'] == 0:
+        return ''
+    elif df_row['pps_distance_2'] >= 12 or df_row['pps_distance_2'] < 5.5:
+        return ''
+    elif df_row['pps_distance_2'] < 8:
+        d = 2
+        fr1 = df_row['pps_fr1_2']
+        bl1 = df_row['pps_first_call_beaten_lengths_2']
+        if fr1 == 0:
+            return 0
+        return round((d * 660) / (fr1 + bl1 * 0.2), 2)
+    else:
+        d = 4
+        fr2 = df_row['pps_fr2_2']
+        bl2 = df_row['pps_first_call_beaten_lengths_2']
+        if fr2 == 0:
+            return 0
+        return round((d * 660) / (fr2 + bl2 * 0.2), 2)
+
+
+def calculate_horse_fractional_fps2_2(df_row):
+    if df_row['pps_distance_2'] == '' or df_row['pps_distance_2'] == 0:
+        return ''
+    elif df_row['pps_distance_2'] >= 12 or df_row['pps_distance_2'] < 5.5:
+        return ''
+    elif df_row['pps_distance_2'] < 8:
+        d = 2
+        fr2 = df_row['pps_fr2_2']
+        bl2 = df_row['pps_second_call_beaten_lengths_2']
+        fr1 = df_row['pps_fr1_2']
+        bl1 = df_row['pps_first_call_beaten_lengths_2']
+        if fr1 == 0 or fr2 == 0:
+            return 0
+        return round((d * 660) / ((fr2 + bl2 * 0.2) - (fr1 + bl1 * 0.2)), 2)
+    else:
+        d = 2
+        fr3 = df_row['pps_fr3_2']
+        bl3 = df_row['pps_second_call_beaten_lengths_2']
+        fr2 = df_row['pps_fr2_2']
+        bl2 = df_row['pps_first_call_beaten_lengths_2']
+        if fr2 == 0 or fr3 == 0:
+            return 0
+        return round((d * 660) / ((fr3 + bl3 * 0.2) - (fr2 + bl2 * 0.2)), 2)
+
+
+def calculate_horse_fractional_fps3_2(df_row):
+    if df_row['pps_distance_2'] == '' or df_row['pps_distance_2'] == 0:
+        return ''
+    elif df_row['pps_distance_2'] >= 12 or df_row['pps_distance_2'] < 5.5:
+        return ''
+    elif df_row['pps_distance_2'] < 8:
+        d = df_row['pps_distance_2'] - 4
+        fr3 = df_row['pps_final_time_2']
+        bl3 = df_row['pps_finish_beaten_lengths_2']
+        fr2 = df_row['pps_fr2_2']
+        bl2 = df_row['pps_second_call_beaten_lengths_2']
+        if fr2 == 0 or fr3 == 0:
+            return 0
+        return round((d * 660) / ((fr3 + bl3 * 0.2) - (fr2 + bl2 * 0.2)), 2)
+    else:
+        d = df_row['pps_distance_2'] - 6
+        fr4 = df_row['pps_final_time_2']
+        bl4 = df_row['pps_finish_beaten_lengths_2']
+        fr3 = df_row['pps_fr3_2']
+        bl3 = df_row['pps_second_call_beaten_lengths_2']
+        if fr3 == 0 or fr4 == 0:
+            return 0
+        return round((d * 660) / ((fr4 + bl4 * 0.2) - (fr3 + bl3 * 0.2)), 2)
+
+
+def calculate_horse_fractional_fps1_3(df_row):
+    if df_row['pps_distance_3'] == '' or df_row['pps_distance_3'] == 0:
+        return ''
+    elif df_row['pps_distance_3'] >= 12 or df_row['pps_distance_3'] < 5.5:
+        return ''
+    elif df_row['pps_distance_3'] < 8:
+        d = 2
+        fr1 = df_row['pps_fr1_3']
+        bl1 = df_row['pps_first_call_beaten_lengths_3']
+        if fr1 == 0:
+            return 0
+        return round((d * 660) / (fr1 + bl1 * 0.2), 2)
+    else:
+        d = 4
+        fr2 = df_row['pps_fr2_3']
+        bl2 = df_row['pps_first_call_beaten_lengths_3']
+        if fr2 == 0:
+            return 0
+        return round((d * 660) / (fr2 + bl2 * 0.2), 2)
+
+
+def calculate_horse_fractional_fps2_3(df_row):
+    if df_row['pps_distance_3'] == '' or df_row['pps_distance_3'] == 0:
+        return ''
+    elif df_row['pps_distance_3'] >= 12 or df_row['pps_distance_3'] < 5.5:
+        return ''
+    elif df_row['pps_distance_3'] < 8:
+        d = 2
+        fr2 = df_row['pps_fr2_3']
+        bl2 = df_row['pps_second_call_beaten_lengths_3']
+        fr1 = df_row['pps_fr1_3']
+        bl1 = df_row['pps_first_call_beaten_lengths_3']
+        if fr1 == 0 or fr2 == 0:
+            return 0
+        return round((d * 660) / ((fr2 + bl2 * 0.2) - (fr1 + bl1 * 0.2)), 2)
+    else:
+        d = 2
+        fr3 = df_row['pps_fr3_3']
+        bl3 = df_row['pps_second_call_beaten_lengths_3']
+        fr2 = df_row['pps_fr2_3']
+        bl2 = df_row['pps_first_call_beaten_lengths_3']
+        if fr2 == 0 or fr3 == 0:
+            return 0
+        return round((d * 660) / ((fr3 + bl3 * 0.2) - (fr2 + bl2 * 0.2)), 2)
+
+
+def calculate_horse_fractional_fps3_3(df_row):
+    if df_row['pps_distance_3'] == '' or df_row['pps_distance_3'] == 0:
+        return ''
+    elif df_row['pps_distance_3'] >= 12 or df_row['pps_distance_3'] < 5.5:
+        return ''
+    elif df_row['pps_distance_3'] < 8:
+        d = df_row['pps_distance_3'] - 4
+        fr3 = df_row['pps_final_time_3']
+        bl3 = df_row['pps_finish_beaten_lengths_3']
+        fr2 = df_row['pps_fr2_3']
+        bl2 = df_row['pps_second_call_beaten_lengths_3']
+        if fr2 == 0 or fr3 == 0:
+            return 0
+        return round((d * 660) / ((fr3 + bl3 * 0.2) - (fr2 + bl2 * 0.2)), 2)
+    else:
+        d = df_row['pps_distance_3'] - 6
+        fr4 = df_row['pps_final_time_3']
+        bl4 = df_row['pps_finish_beaten_lengths_3']
+        fr3 = df_row['pps_fr3_3']
+        bl3 = df_row['pps_second_call_beaten_lengths_3']
+        if fr3 == 0 or fr4 == 0:
+            return 0
+        return round((d * 660) / ((fr4 + bl4 * 0.2) - (fr3 + bl3 * 0.2)), 2)
+
+
+def calculate_horse_fractional_fps1_4(df_row):
+    if df_row['pps_distance_4'] == '' or df_row['pps_distance_4'] == 0:
+        return ''
+    elif df_row['pps_distance_4'] >= 12 or df_row['pps_distance_4'] < 5.5:
+        return ''
+    elif df_row['pps_distance_4'] < 8:
+        d = 2
+        fr1 = df_row['pps_fr1_4']
+        bl1 = df_row['pps_first_call_beaten_lengths_4']
+        if fr1 == 0:
+            return 0
+        return round((d * 660) / (fr1 + bl1 * 0.2), 2)
+    else:
+        d = 4
+        fr2 = df_row['pps_fr2_4']
+        bl2 = df_row['pps_first_call_beaten_lengths_4']
+        if fr2 == 0:
+            return 0
+        return round((d * 660) / (fr2 + bl2 * 0.2), 2)
+
+
+def calculate_horse_fractional_fps2_4(df_row):
+    if df_row['pps_distance_4'] == '' or df_row['pps_distance_4'] == 0:
+        return ''
+    elif df_row['pps_distance_4'] >= 12 or df_row['pps_distance_4'] < 5.5:
+        return ''
+    elif df_row['pps_distance_4'] < 8:
+        d = 2
+        fr2 = df_row['pps_fr2_4']
+        bl2 = df_row['pps_second_call_beaten_lengths_4']
+        fr1 = df_row['pps_fr1_4']
+        bl1 = df_row['pps_first_call_beaten_lengths_4']
+        if fr1 == 0 or fr2 == 0:
+            return 0
+        return round((d * 660) / ((fr2 + bl2 * 0.2) - (fr1 + bl1 * 0.2)), 2)
+    else:
+        d = 2
+        fr3 = df_row['pps_fr3_4']
+        bl3 = df_row['pps_second_call_beaten_lengths_4']
+        fr2 = df_row['pps_fr2_4']
+        bl2 = df_row['pps_first_call_beaten_lengths_4']
+        if fr2 == 0 or fr3 == 0:
+            return 0
+        return round((d * 660) / ((fr3 + bl3 * 0.2) - (fr2 + bl2 * 0.2)), 2)
+
+
+def calculate_horse_fractional_fps3_4(df_row):
+    if df_row['pps_distance_4'] == '' or df_row['pps_distance_4'] == 0:
+        return ''
+    elif df_row['pps_distance_4'] >= 12 or df_row['pps_distance_4'] < 5.5:
+        return ''
+    elif df_row['pps_distance_4'] < 8:
+        d = df_row['pps_distance_4'] - 4
+        fr3 = df_row['pps_final_time_4']
+        bl3 = df_row['pps_finish_beaten_lengths_4']
+        fr2 = df_row['pps_fr2_4']
+        bl2 = df_row['pps_second_call_beaten_lengths_4']
+        if fr2 == 0 or fr3 == 0:
+            return 0
+        return round((d * 660) / ((fr3 + bl3 * 0.2) - (fr2 + bl2 * 0.2)), 2)
+    else:
+        d = df_row['pps_distance_4'] - 6
+        fr4 = df_row['pps_final_time_4']
+        bl4 = df_row['pps_finish_beaten_lengths_4']
+        fr3 = df_row['pps_fr3_4']
+        bl3 = df_row['pps_second_call_beaten_lengths_4']
+        if fr3 == 0 or fr4 == 0:
+            return 0
+        return round((d * 660) / ((fr4 + bl4 * 0.2) - (fr3 + bl3 * 0.2)), 2)
