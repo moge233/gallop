@@ -349,6 +349,16 @@ def get_charts(path: str) -> list[Chart | None]:
 
 
 def chart_to_data_dict(chart: Chart, data_dir: str, track_code: str):
+    '''
+    Get the Brisnet SingleFile data files (as a dict) associated with the chart's date.
+
+    :param chart: The chart to get Brisnet PP's for
+    :type chart: Chart
+    :param data_dir: The directory to search for the Brisnet SingleFile data files
+    :type data_dir: str
+    :param track_code: The DRF result chart track code
+    :type track_code: str
+    '''
     singlefiles_available = os.listdir(data_dir)
     singlefile_track_code = track_code + 'X' if len(track_code) == 2 else track_code
     chart_dict = {}
@@ -362,6 +372,41 @@ def chart_to_data_dict(chart: Chart, data_dir: str, track_code: str):
                 chart_dict[key] = {}
             if row.horse.name not in chart_dict[key].keys():
                 chart_dict[key][row.horse.name] = {}
+            row_horse_dict = dict(vars(row.horse))
+            del row_horse_dict['name']
+            del row_horse_dict['stats']
+            del row_horse_dict['workouts']
+            del row_horse_dict['past_performances']
+            chart_dict[key][row.horse.name]['datekey'] = f'{row.race.date}{row.race.number:02d}'
+            chart_dict[key][row.horse.name]['winner'] = 0
+            for performance in chart.starters_performance_data:
+                if performance.horse_name.casefold() == row.horse.name.casefold():
+                    if performance.program_number == 'SCR':
+                        chart_dict[key][row.horse.name]['scratch'] = 1
+                    else:
+                        chart_dict[key][row.horse.name]['scratch'] = 0
+                    chart_dict[key][row.horse.name]['post_position'] = performance.post_position
+                    if performance.original_finish == 1:
+                        chart_dict[key][row.horse.name]['winner'] = 1
+            for k, v in row_horse_dict.items():
+                if k not in chart_dict[key][row.horse.name].keys():
+                    chart_dict[key][row.horse.name][f'horse_{k}'] = v
+            row_jockey_dict = dict(vars(row.jockey))
+            for k, v in row_jockey_dict.items():
+                if k not in chart_dict[key][row.horse.name].keys():
+                    chart_dict[key][row.horse.name][f'jockey_{k}'] = v
+            row_trainer_dict = dict(vars(row.trainer))
+            for k, v in row_trainer_dict.items():
+                if k not in chart_dict[key][row.horse.name].keys():
+                    chart_dict[key][row.horse.name][f'trainer_{k}'] = v
+            row_trainer_jockey_combo_dict = dict(vars(row.trainer_jockey_combo))
+            for k, v in row_trainer_jockey_combo_dict.items():
+                if k not in chart_dict[key][row.horse.name].keys():
+                    chart_dict[key][row.horse.name][f'trainer_jockey_combo_{k}'] = v
+            row_owner_dict = dict(vars(row.owner))
+            for k, v in row_owner_dict.items():
+                if k not in chart_dict[key][row.horse.name].keys():
+                    chart_dict[key][row.horse.name][f'owner_{k}'] = v
             for i, pp in enumerate(row.horse.past_performances[:4]):
                 chart_dict[key][row.horse.name][f'past_performances{i + 1}'] = pp
     return chart_dict
@@ -371,10 +416,22 @@ def data_dict_to_rows(data_dict: dict):
     rows = []
     for race, race_dict in data_dict.items():
         for horse, horse_dict in race_dict.items():
-            horse_pp_dict = {'race': race, 'name': horse}
-            for key, pp in horse_dict.items():
-                for k, v in dict(vars(pp)).items():
-                    new_key = f'{k}{key[-1]}'
-                    horse_pp_dict[new_key] = v
+            horse_pp_dict = {
+                'race': race,
+                'horse_name': horse,
+            }
+            for key, item in horse_dict.items():
+                if 'past_performances' in key:
+                    for k, v in dict(vars(item)).items():
+                        new_key = f'pps_{k}_{key[-1]}'
+                        horse_pp_dict[new_key] = v
+                else:
+                    horse_pp_dict[key] = item
             rows.append(horse_pp_dict)
     return rows
+
+
+def clean_row(row: dict):
+    ret = row
+    del ret['trainer_key_stats']
+    return ret
